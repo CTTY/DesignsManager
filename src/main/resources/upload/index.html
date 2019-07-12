@@ -1,0 +1,40 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Upload Files</title>
+</head>
+
+  <body>
+  <center>
+
+    <form method="post" action="/message">
+      <br>
+      <select name="Action" size="1">
+        <option>ListFiles</option>
+        <option>Nope</option>
+        <option>Nooo</option>
+      </select>
+      <br><br>
+      <input type="submit">
+    </form>
+
+   <!-- <script src="upload.js"></script> -->
+
+    <input type="button" onclick="alert('This button is a joke!');" value="Joke" />
+
+
+    <p>Please follow <a href="//localhost:8080/upload/test.jsp">this link</a>.</p>
+
+
+    <form method="post" enctype="multipart/form-data" action="message">
+      <input type="file" name="file" />
+      <input type="submit" value="Upload File" name="submit" />
+    </form>
+
+
+
+    <p>Please follow <a href="//localhost:8080/upload/index.html">this link</a>.</p>
+
+  </center>
+  </body>
+</html>
