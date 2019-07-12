@@ -10,8 +10,10 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 
+import java.io.File;
 
-public class UploadVerticle extends AbstractVerticle {
+
+public class DesignManagerVerticle extends AbstractVerticle {
 
     private HttpServer server;
     private Router router;
@@ -81,10 +83,17 @@ public class UploadVerticle extends AbstractVerticle {
         System.out.println("POST Handler!");
 //                    System.out.println(ctx.fileUploads().toString());
         for(FileUpload file : ctx.fileUploads()){
-            System.out.println("Random Stuff");
             ctx.response().write("<h3>" + "Filename: " + file.fileName() + "</h3>");
             ctx.response().write("<h3>" + "ContentType: " + file.contentType() + "</h3>");
             ctx.response().write("<h3>" + "Name: " + file.name() + "</h3>");
+            ctx.response().write("<h3>" + "Actual Name: " + file.uploadedFileName() + "</h3>");
+            File testFile = new File(file.uploadedFileName());
+            if(testFile.renameTo(new File("uploads/hello.txt"))){
+                System.out.println("Rename Successful");
+            }else{
+                System.out.println("Failed");
+            }
+            ctx.response().write("<h3>" + "Test File: " + testFile.getPath() + "</h3>");
         }
         ctx.response().end();
     }
