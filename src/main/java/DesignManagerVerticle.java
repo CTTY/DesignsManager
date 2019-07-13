@@ -23,7 +23,7 @@ public class DesignManagerVerticle extends AbstractVerticle {
         // Expose static resources
         router = Router.router(vertx);
 
-        router.route().handler(BodyHandler.create().setUploadsDirectory("uploads")); //???
+        router.route().handler(BodyHandler.create().setUploadsDirectory("uploads")); //set upload directory
 
         router
                 .route("/*")
@@ -88,7 +88,7 @@ public class DesignManagerVerticle extends AbstractVerticle {
             ctx.response().write("<h3>" + "Name: " + file.name() + "</h3>");
             ctx.response().write("<h3>" + "Actual Name: " + file.uploadedFileName() + "</h3>");
             File testFile = new File(file.uploadedFileName());
-            if(testFile.renameTo(new File("uploads/hello.txt"))){
+            if(testFile.renameTo(new File("uploads/TestFile.txt"))){
                 System.out.println("Rename Successful");
             }else{
                 System.out.println("Failed");

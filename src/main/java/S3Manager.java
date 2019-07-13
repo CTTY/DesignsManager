@@ -6,13 +6,13 @@ import java.io.File;
 import java.io.FileWriter;
 import java.nio.file.Path;
 
-public class S3Verticle {
+public class S3Manager {
     private S3Client s3;
 
-    private final String fileBucketName = "Designs";
-    private final String descriptionBucketName = "Descriptions";
+    private final String fileBucketName = "peicenjiang-design";
+    private final String descriptionBucketName = "peicenjiang-design";
 
-    S3Verticle(){
+    S3Manager(){
         /*Intializing S3*/
         Region region = Region.US_EAST_1;
         s3 = S3Client.builder().region(region).build();
@@ -20,7 +20,7 @@ public class S3Verticle {
 
 
     /** Put design on the website*/
-    private void putDesign(Path path, String description){
+    public void putDesign(Path path, String description){
         s3.putObject(PutObjectRequest.builder()
                         .bucket(fileBucketName)
                         .key(path.getFileName().toString())
@@ -45,18 +45,18 @@ public class S3Verticle {
 
         s3.putObject(PutObjectRequest.builder()
                         .bucket(descriptionBucketName)
-                        .key(path.getFileName().toString())
+                        .key(path.getFileName().toString() + "-description.txt")
                         .build(), tempFile.toPath());
 
     }
 
     /** Delete design on the website*/
-    private void deleteDesign(String fileName){
+    public void deleteDesign(String fileName){
 
     }
 
     /** Replace design on the website*/
-    private void replaceDesign(Path path, String description){
+    public void replaceDesign(Path path, String description){
 
     }
 }
