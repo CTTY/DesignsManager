@@ -11,6 +11,7 @@ import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 
 import java.io.File;
+import java.nio.file.Files;
 
 
 public class DesignManagerVerticle extends AbstractVerticle {
@@ -60,7 +61,7 @@ public class DesignManagerVerticle extends AbstractVerticle {
         ctx.response().putHeader("content-type", "text/html");
         ctx.response().setChunked(true);
         System.out.println("GET Handler!");
-        String option = ctx.request().getParam("Action");
+        String option = ctx.request().getParam("action");
 
         System.out.println(option);
         if(option.equals("ListFiles")){
@@ -76,24 +77,44 @@ public class DesignManagerVerticle extends AbstractVerticle {
     }
 
     private void POSTHandler(RoutingContext ctx){
+
         ctx.response().putHeader("Content-Type", "text/html");
 
         ctx.response().setChunked(true);
 
         System.out.println("POST Handler!");
-//                    System.out.println(ctx.fileUploads().toString());
+
+        if(ctx.fileUploads().size()>1){
+            System.out.println("Error: can only upload 1 file once");
+            return;
+        }
+
+        String description = ctx.request().getParam("description");
+
+        System.out.println("Description:" + description);
+
+        S3Manager s3 = new S3Manager();
+
         for(FileUpload file : ctx.fileUploads()){
             ctx.response().write("<h3>" + "Filename: " + file.fileName() + "</h3>");
             ctx.response().write("<h3>" + "ContentType: " + file.contentType() + "</h3>");
             ctx.response().write("<h3>" + "Name: " + file.name() + "</h3>");
             ctx.response().write("<h3>" + "Actual Name: " + file.uploadedFileName() + "</h3>");
             File testFile = new File(file.uploadedFileName());
-            if(testFile.renameTo(new File("uploads/TestFile.txt"))){
-                System.out.println("Rename Successful");
-            }else{
-                System.out.println("Failed");
+//            if(testFile.renameTo(new File("uploads/" + file.fileName()))){
+//                System.out.println("Rename Successful");
+//            }else{
+//                System.out.println("Failed");
+//            }
+            try{
+                Files.move(testFile.toPath(), testFile.toPath().resolveSibling(file.fileName()));
+            }catch(Exception e){
+                System.out.println("Rename Failed");
             }
+            System.out.println("Rename Successful");
             ctx.response().write("<h3>" + "Test File: " + testFile.getPath() + "</h3>");
+
+            s3.putDesign(testFile.toPath(), description);
         }
         ctx.response().end();
     }

@@ -9,7 +9,7 @@
 
     <form method="post" action="/message">
       <br>
-      <select name="Action" size="1">
+      <select name="action" size="1">
         <option>ListFiles</option>
         <option>Nope</option>
         <option>Nooo</option>
@@ -26,6 +26,7 @@
 
     <form method="post" enctype="multipart/form-data" action="upload">
       <input type="file" name="file" />
+      <input type="text" name="description" />
       <input type="submit" value="Upload File" name="submit" />
     </form>
 
