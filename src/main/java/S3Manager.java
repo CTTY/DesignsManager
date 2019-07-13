@@ -1,9 +1,11 @@
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class S3Manager {
@@ -21,13 +23,20 @@ public class S3Manager {
 
     /** Put design on the website*/
     public void putDesign(Path path, String description){
-        s3.putObject(PutObjectRequest.builder()
-                        .bucket(fileBucketName)
-                        .key(path.getFileName().toString())
-                        .build()
-                , path);
+        String key = path.getFileName().toString();
+        try{
+            s3.putObject(PutObjectRequest.builder()
+                            .bucket(fileBucketName)
+                            .key(key)
+                            .build()
+                    , path);
+        }catch(Exception e){
+            // Upload file failed
+            e.printStackTrace();
+            return;
+        }
 
-        File tempFile = new File("tempFile");
+        File tempFile = new File("description.txt");
         if(tempFile.exists()){
             tempFile.delete();
             try{
@@ -37,26 +46,52 @@ public class S3Manager {
             }
         }
         try{
-            FileWriter fw = new FileWriter(tempFile);
-            fw.write(description);
+            Files.write(tempFile.toPath(), description.getBytes());
         }catch (Exception e){
+            System.out.println("Cannot write");
             e.printStackTrace();
         }
+        try{
+            s3.putObject(PutObjectRequest.builder()
+                    .bucket(descriptionBucketName)
+                    .key(key + "-description.txt")
+                    .build(), tempFile.toPath());
+        }catch(Exception e){
+            //Upload description failed
+            e.printStackTrace();
+            return;
+        }
 
-        s3.putObject(PutObjectRequest.builder()
-                        .bucket(descriptionBucketName)
-                        .key(path.getFileName().toString() + "-description.txt")
-                        .build(), tempFile.toPath());
 
     }
 
     /** Delete design on the website*/
     public void deleteDesign(String fileName){
+        String key = fileName;
+
+        //Delete file
+        try{
+            s3.deleteObject(DeleteObjectRequest.builder()
+                    .bucket(fileBucketName)
+                    .key(key)
+                    .build());
+        }catch(Exception e){
+            e.printStackTrace();
+            System.out.println("Delete file failed");
+        }
+
+
+        //Delete description
+        try{
+            s3.deleteObject(DeleteObjectRequest.builder()
+                    .bucket(descriptionBucketName)
+                    .key(key + "-description.txt")
+                    .build());
+        }catch(Exception e){
+            e.printStackTrace();
+            System.out.println("Delete description failed");
+        }
 
     }
 
-    /** Replace design on the website*/
-    public void replaceDesign(Path path, String description){
-
-    }
 }
