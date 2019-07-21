@@ -8,13 +8,13 @@ import java.io.FileWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class S3Manager {
+public class S3Verticle {
     private S3Client s3;
 
     private final String fileBucketName = "peicenjiang-design";
     private final String descriptionBucketName = "peicenjiang-design";
 
-    S3Manager(){
+    S3Verticle(){
         /*Intializing S3*/
         Region region = Region.US_EAST_1;
         s3 = S3Client.builder().region(region).build();

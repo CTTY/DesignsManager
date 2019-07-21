@@ -1,10 +1,7 @@
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
-import io.vertx.core.Vertx;
-import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.http.*;
 import io.vertx.ext.web.FileUpload;
-import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -93,7 +90,7 @@ public class DesignManagerVerticle extends AbstractVerticle {
 
         System.out.println("Description:" + description);
 
-        S3Manager s3 = new S3Manager();
+        S3Verticle s3 = new S3Verticle();
 
         for(FileUpload file : ctx.fileUploads()){
             ctx.response().write("<h3>" + "Filename: " + file.fileName() + "</h3>");

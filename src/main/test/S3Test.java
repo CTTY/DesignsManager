@@ -3,7 +3,7 @@ import java.io.File;
 public class S3Test {
 
     S3Test(){
-        S3Manager s3 = new S3Manager();
+        S3Verticle s3 = new S3Verticle();
 
         File file = new File("TestFile.txt");
         try{
