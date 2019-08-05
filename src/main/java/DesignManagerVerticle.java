@@ -98,20 +98,20 @@ public class DesignManagerVerticle extends AbstractVerticle {
             ctx.response().write("<h3>" + "Name: " + file.name() + "</h3>");
             ctx.response().write("<h3>" + "Actual Name: " + file.uploadedFileName() + "</h3>");
             File testFile = new File(file.uploadedFileName());
-//            if(testFile.renameTo(new File("uploads/" + file.fileName()))){
-//                System.out.println("Rename Successful");
-//            }else{
-//                System.out.println("Failed");
-//            }
-            try{
-                Files.move(testFile.toPath(), testFile.toPath().resolveSibling(file.fileName()));
-            }catch(Exception e){
+            File uploadFile = new File("uploads/" + file.fileName());
+            if(!testFile.renameTo(uploadFile)){
                 System.out.println("Rename Failed");
             }
-            System.out.println("Rename Successful");
-            ctx.response().write("<h3>" + "Test File: " + testFile.getPath() + "</h3>");
 
-            s3.putDesign(testFile.toPath(), description);
+            try{
+                uploadFile.createNewFile();
+                System.out.println("Rename Success");
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+            ctx.response().write("<h3>" + "Upload File: " + uploadFile.getPath() + "</h3>");
+
+            s3.putDesign(uploadFile.toPath(), description);
         }
         ctx.response().end();
     }
