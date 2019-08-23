@@ -43,7 +43,7 @@ public class DesignManagerVerticle extends AbstractVerticle {
         server = vertx
                 .createHttpServer()
                 .requestHandler(router)
-                .listen(8080, res -> {
+                .listen(8000, res -> {
                     if (res.succeeded()) {
                     System.out.println("Server succeed deployed");
                     startFuture.complete();
