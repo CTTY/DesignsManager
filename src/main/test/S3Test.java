@@ -6,6 +6,8 @@ public class S3Test {
         S3Verticle s3 = new S3Verticle();
 
         File file = new File("TestFile.txt");
+
+
         try{
             s3.putDesign(file.toPath(), "This is a big hello");
         }catch(Exception e){
@@ -13,6 +15,7 @@ public class S3Test {
             System.out.println("Put design failed");
         }
 
+        //Delete Test
         try{
             s3.deleteDesign("TestFile.txt");
         }catch(Exception e){

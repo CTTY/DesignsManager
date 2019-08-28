@@ -1,14 +1,19 @@
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.http.*;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.FileUpload;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
+import software.amazon.awssdk.services.s3.model.S3Object;
 
 import java.io.File;
+import java.net.URL;
 import java.nio.file.Files;
+import java.util.List;
 
 
 public class DesignManagerVerticle extends AbstractVerticle {
@@ -18,27 +23,35 @@ public class DesignManagerVerticle extends AbstractVerticle {
 
     @Override
     public void start(Future<Void> startFuture) {
-        // Expose static resources
+
         router = Router.router(vertx);
 
         router.route().handler(BodyHandler.create().setUploadsDirectory("uploads")); //set upload directory
 
+        // Expose html page as main page, don't need this in the future
         router
                 .route("/*")
                 .handler(StaticHandler.create("upload"));
 
         /* Routing by HTTP method*/
 
-        // GET
         router
                 .post("/message")
-                .handler(this::GETHandler);
+                .handler(this::TestHandler);
 
 
-        // POST
+        // Route to handlers
         router
-                .postWithRegex("/upload/*")
-                .handler(this::POSTHandler);
+                .post("/api/upload")
+                .handler(this::UploadHandler);
+
+        router
+                .post("/api/delete")
+                .handler(this::DeleteHandler);
+
+        router
+                .post("/api/list")
+                .handler(this::ListHandler);
 
         server = vertx
                 .createHttpServer()
@@ -54,7 +67,7 @@ public class DesignManagerVerticle extends AbstractVerticle {
     }
 
 
-    private void GETHandler(RoutingContext ctx){
+    private void TestHandler(RoutingContext ctx){
         ctx.response().putHeader("content-type", "text/html");
         ctx.response().setChunked(true);
         System.out.println("GET Handler!");
@@ -73,13 +86,16 @@ public class DesignManagerVerticle extends AbstractVerticle {
         ctx.response().end();
     }
 
-    private void POSTHandler(RoutingContext ctx){
+    /** Request params:
+     * "File"
+     * description */
+    private void UploadHandler(RoutingContext ctx){
 
         ctx.response().putHeader("Content-Type", "text/html");
 
         ctx.response().setChunked(true);
 
-        System.out.println("POST Handler!");
+        System.out.println("Upload Handler!");
 
         if(ctx.fileUploads().size()>1){
             System.out.println("Error: can only upload 1 file once");
@@ -111,9 +127,80 @@ public class DesignManagerVerticle extends AbstractVerticle {
             }
             ctx.response().write("<h3>" + "Upload File: " + uploadFile.getPath() + "</h3>");
 
-            s3.putDesign(uploadFile.toPath(), description);
+            try{
+                s3.putDesign(uploadFile.toPath(), description);
+            }catch(Exception e){
+                e.printStackTrace();
+            }
         }
+        // Need to clean the /uploads directory here
+
+        // Response with a html page, don't need this in the future
         ctx.response().end();
+    }
+
+    /** Request params
+     * id
+     * title */
+    private void DeleteHandler(RoutingContext ctx){
+        System.out.println("Delete Handler!");
+        String title  = ctx.request().getParam("title");
+        S3Verticle s3 = new S3Verticle();
+        try{
+            s3.deleteDesign(title);
+        }catch(Exception e){
+            e.printStackTrace();
+            ctx.response()
+                    .putHeader("Content-Type","text/plain")
+                    .end("Delete failed");
+        }
+        ctx.response().setStatusCode(200).end();
+        System.out.println("Delete Finished");
+    }
+
+
+    /** Request params:
+     * (null)
+     * Return a JSON file with information of all designs in HTTP response */
+    private void ListHandler(RoutingContext ctx){
+        System.out.println("List Handler!");
+        S3Verticle s3 = new S3Verticle();
+
+        ctx.response().putHeader("Content-Type", "application/json");
+        ctx.response().setChunked(true);
+
+        List<S3Object> list;
+        try{
+            list = s3.listDesign();
+        }catch(Exception e){
+            e.printStackTrace();
+            ctx.response().end("List Error");
+            return;
+        }
+
+        JsonObject json = new JsonObject();
+        JsonArray array = new JsonArray();
+        JsonObject tempJsonObj = new JsonObject();
+        System.out.println("Building JsonArray  " + list.size());
+        // Iterate objects list, build JsonArray that store information of all design
+        for(S3Object obj: list){
+            tempJsonObj.clear();
+            String key = obj.key();
+            System.out.println(obj.key());
+            String URLStr = s3.getDesignURL(obj.key()).toString();
+            System.out.println("URL: "+ URLStr);
+            tempJsonObj.put("title", key)
+                    .put("URL", URLStr);
+            array.add(tempJsonObj);
+        }
+
+        System.out.println("Array: " + array.toString());
+        json.put("arrayOfDesign", array);
+        System.out.println("JSON: " + json.toString());
+
+        ctx.response()
+                .write(json.toBuffer())
+                .end();
     }
 
 
