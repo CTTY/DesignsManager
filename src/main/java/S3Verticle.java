@@ -1,15 +1,19 @@
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.S3Utilities;
+import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 public class S3Verticle {
     private S3Client s3;
+    private S3Utilities s3Utilities;
 
     private final String fileBucketName = "peicenjiang-design";
     private final String descriptionBucketName = "peicenjiang-design";
@@ -18,6 +22,7 @@ public class S3Verticle {
         /*Intializing S3*/
         Region region = Region.US_EAST_1;
         s3 = S3Client.builder().region(region).build();
+        s3Utilities = S3Utilities.builder().region(region).build();
     }
 
 
@@ -91,7 +96,30 @@ public class S3Verticle {
             e.printStackTrace();
             System.out.println("Delete description failed");
         }
+    }
 
+    public List<S3Object> listDesign(){
+        ListObjectsRequest request = ListObjectsRequest.builder()
+                .bucket(fileBucketName)
+                .build();
+
+        ListObjectsResponse response = s3.listObjects(request);
+
+        List<S3Object> res = new ArrayList<>();
+        for(S3Object obj:response.contents()){
+            if(!obj.key().endsWith("-description.txt")){
+                res.add(obj);
+            }
+        }
+        return res;
+    }
+
+    public URL getDesignURL(String key){
+        GetUrlRequest request = GetUrlRequest.builder()
+                .bucket(fileBucketName)
+                .key(key)
+                .build();
+        return s3Utilities.getUrl(request);
     }
 
 }
