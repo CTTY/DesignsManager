@@ -11,8 +11,6 @@ import io.vertx.ext.web.handler.StaticHandler;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
 import java.io.File;
-import java.net.URL;
-import java.nio.file.Files;
 import java.util.List;
 
 
@@ -43,15 +41,19 @@ public class DesignManagerVerticle extends AbstractVerticle {
         // Route to handlers
         router
                 .post("/api/upload")
-                .handler(this::UploadHandler);
+                .handler(this::uploadHandler);
 
         router
                 .post("/api/delete")
-                .handler(this::DeleteHandler);
+                .handler(this::deleteHandler);
 
         router
                 .post("/api/list")
-                .handler(this::ListHandler);
+                .handler(this::listHandler);
+
+        router
+                .post("/api/download")
+                .handler(this::downloadHandler);
 
         server = vertx
                 .createHttpServer()
@@ -89,7 +91,7 @@ public class DesignManagerVerticle extends AbstractVerticle {
     /** Request params:
      * "File"
      * description */
-    private void UploadHandler(RoutingContext ctx){
+    private void uploadHandler(RoutingContext ctx){
 
         ctx.response().putHeader("Content-Type", "text/html");
 
@@ -142,7 +144,7 @@ public class DesignManagerVerticle extends AbstractVerticle {
     /** Request params
      * id
      * title */
-    private void DeleteHandler(RoutingContext ctx){
+    private void deleteHandler(RoutingContext ctx){
         System.out.println("Delete Handler!");
         String title  = ctx.request().getParam("title");
         S3Verticle s3 = new S3Verticle();
@@ -162,7 +164,7 @@ public class DesignManagerVerticle extends AbstractVerticle {
     /** Request params:
      * (null)
      * Return a JSON file with information of all designs in HTTP response */
-    private void ListHandler(RoutingContext ctx){
+    private void listHandler(RoutingContext ctx){
         System.out.println("List Handler!");
         S3Verticle s3 = new S3Verticle();
 
@@ -201,6 +203,44 @@ public class DesignManagerVerticle extends AbstractVerticle {
         ctx.response()
                 .write(json.toBuffer())
                 .end();
+    }
+
+    /**Request params:
+     * key*/
+    private void downloadHandler(RoutingContext ctx){
+        System.out.println("Download Handler!");
+        String key = ctx.request().getParam("key");
+        String descriptionKey = key + "-description.txt";
+        S3Verticle s3 = new S3Verticle();
+        try{
+            s3.getDesign(key);
+        }catch(Exception e){
+            e.printStackTrace();
+            System.out.println("Download design failed!");
+        }
+        ctx.response()
+                .sendFile("./download/design/" + key)
+                .sendFile("./download/description/" + descriptionKey);
+
+
+    }
+
+    private void cleanUpHandler(RoutingContext ctx){
+        System.out.println("I'm here!");
+
+        boolean result = deleteDirectory(new File("./download"));
+        System.out.println("Result: " + result);
+        ctx.response().end();
+    }
+
+    public boolean deleteDirectory(File directoryToBeDeleted){
+        File[] allContents = directoryToBeDeleted.listFiles();
+        if(allContents != null){
+            for(File file : allContents){
+                deleteDirectory(file);
+            }
+        }
+        return directoryToBeDeleted.delete();
     }
 
 

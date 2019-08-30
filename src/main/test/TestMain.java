@@ -5,6 +5,11 @@ public class TestMain {
 //        new FileWriterTest();
 
         // Test S3
-        new S3Test();
+//        new S3Test();
+
+        //Test create file
+//        new FileCreateTest();
+        //Test delete directory
+        new DeleteDirectoryTest();
     }
 }
