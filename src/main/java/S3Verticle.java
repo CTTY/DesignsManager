@@ -8,6 +8,7 @@ import java.io.FileWriter;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,6 +69,64 @@ public class S3Verticle {
         }
 
 
+    }
+    /** Get design from the s3*/
+    public void getDesign(String key){
+
+        String descriptionKey = key + "-description.txt";
+        GetObjectRequest designReq;
+        GetObjectRequest descriptionReq;
+        File tempDir = new File("./download");
+        if(!tempDir.exists())
+            tempDir.mkdir();
+
+        tempDir = new File("./download/design");
+        if(!tempDir.exists())
+            tempDir.mkdir();
+
+        tempDir = new File("./download/description");
+        if(!tempDir.exists())
+            tempDir.mkdir();
+
+        File design = new File("download/design/" + key);
+        File description = new File("download/description/" + descriptionKey);
+        if(design.exists()){
+            try{
+                design.delete();
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+
+        if(description.exists()){
+            try{
+                description.delete();
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+
+        Path designPath = design.toPath();
+        Path descriptionPath = description.toPath();
+        //Compose requests
+        designReq = GetObjectRequest.builder()
+                .bucket(fileBucketName)
+                .key(key)
+                .build();
+
+        descriptionReq = GetObjectRequest.builder()
+                .bucket(fileBucketName)
+                .key(descriptionKey)
+                .build();
+
+        //Get design and description
+        try{
+            s3.getObject(designReq, designPath);
+            s3.getObject(descriptionReq, descriptionPath);
+        }catch(Exception e){
+            e.printStackTrace();
+            System.out.println("getObject Failure");
+        }
     }
 
     /** Delete design on the website*/
