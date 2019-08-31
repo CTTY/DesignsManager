@@ -58,7 +58,7 @@ public class DesignManagerVerticle extends AbstractVerticle {
         server = vertx
                 .createHttpServer()
                 .requestHandler(router)
-                .listen(8000, res -> {
+                .listen(9000, res -> {
                     if (res.succeeded()) {
                     System.out.println("Server succeed deployed");
                     startFuture.complete();
@@ -114,7 +114,7 @@ public class DesignManagerVerticle extends AbstractVerticle {
             ctx.response().write("<h3>" + "Filename: " + file.fileName() + "</h3>");
             ctx.response().write("<h3>" + "ContentType: " + file.contentType() + "</h3>");
             ctx.response().write("<h3>" + "Name: " + file.name() + "</h3>");
-            ctx.response().write("<h3>" + "Actual Name: " + file.uploadedFileName() + "</h3>");
+            ctx.response().write("<h3>" + "Actual Name: " + file.uploadedFileName() + "</h3>"); // diff b/w actual name and filename
             File testFile = new File(file.uploadedFileName());
             File uploadFile = new File("uploads/" + file.fileName());
             if(!testFile.renameTo(uploadFile)){
