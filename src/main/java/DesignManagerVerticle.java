@@ -55,6 +55,10 @@ public class DesignManagerVerticle extends AbstractVerticle {
                 .post("/api/download")
                 .handler(this::downloadHandler);
 
+        router
+                .post("/api/cleanup")
+                .handler(this::cleanUpHandler);
+
         server = vertx
                 .createHttpServer()
                 .requestHandler(router)
@@ -143,10 +147,10 @@ public class DesignManagerVerticle extends AbstractVerticle {
 
     /** Request params
      * id
-     * title */
+     * key (title) */
     private void deleteHandler(RoutingContext ctx){
         System.out.println("Delete Handler!");
-        String title  = ctx.request().getParam("title");
+        String title  = ctx.request().getParam("key");
         S3Verticle s3 = new S3Verticle();
         try{
             s3.deleteDesign(title);
@@ -182,21 +186,21 @@ public class DesignManagerVerticle extends AbstractVerticle {
 
         JsonObject json = new JsonObject();
         JsonArray array = new JsonArray();
-        JsonObject tempJsonObj = new JsonObject();
-        System.out.println("Building JsonArray  " + list.size());
+        System.out.println("Building JsonArray, Array Size: " + list.size());
         // Iterate objects list, build JsonArray that store information of all design
         for(S3Object obj: list){
-            tempJsonObj.clear();
+            JsonObject tempJsonObj = new JsonObject();
             String key = obj.key();
-            System.out.println(obj.key());
-            String URLStr = s3.getDesignURL(obj.key()).toString();
-            System.out.println("URL: "+ URLStr);
-            tempJsonObj.put("title", key)
+//            System.out.println(obj.key());
+            String URLStr = s3.getDesignURL(key).toString();
+//            System.out.println("URL: "+ URLStr);
+            tempJsonObj.put("key", key)
                     .put("URL", URLStr);
             array.add(tempJsonObj);
+//            System.out.println("Array: " + array.toString());
         }
 
-        System.out.println("Array: " + array.toString());
+//        System.out.println("Array: " + array.toString());
         json.put("arrayOfDesign", array);
         System.out.println("JSON: " + json.toString());
 
@@ -221,19 +225,22 @@ public class DesignManagerVerticle extends AbstractVerticle {
         ctx.response()
                 .sendFile("./download/design/" + key)
                 .sendFile("./download/description/" + descriptionKey);
-
-
     }
 
     private void cleanUpHandler(RoutingContext ctx){
-        System.out.println("I'm here!");
+        System.out.println("Cleaning up...");
 
         boolean result = deleteDirectory(new File("./download"));
-        System.out.println("Result: " + result);
-        ctx.response().end();
+        boolean result2 = deleteDirectory(new File("./uploads"));
+        result = result&&result2;
+        String res = result? "Success":"Failure";
+
+        System.out.println("Clean-up result: " + res);
+        ctx.response().end("Clean-up result: " + res);
     }
 
     public boolean deleteDirectory(File directoryToBeDeleted){
+        if(!directoryToBeDeleted.exists()) return true;
         File[] allContents = directoryToBeDeleted.listFiles();
         if(allContents != null){
             for(File file : allContents){
